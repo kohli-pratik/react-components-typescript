@@ -19,12 +19,14 @@ jobs:
               uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7
               with:
                   github-token: "${{ secrets.GITHUB_TOKEN }}"
-            - name: Approve Dependabot PR
+            - name: Approve Dependabot PR updating minor or patch version
+              if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
               run: gh pr review --approve "$PR_URL"
               env:
                   PR_URL: ${{github.event.pull_request.html_url}}
                   GH_TOKEN: ${{secrets.ACTIONS_WORKFLOWS_TOKEN}}
-            - name: Enable auto-merge for Dependabot PR
+            - name: Enable auto-merge for Dependabot PR updating minor or patch version
+              if: steps.metadata.outputs.update-type == 'version-update:semver-minor' || steps.metadata.outputs.update-type == 'version-update:semver-patch'
               run: gh pr merge --auto --merge "$PR_URL"
               env:
                   PR_URL: ${{github.event.pull_request.html_url}}
