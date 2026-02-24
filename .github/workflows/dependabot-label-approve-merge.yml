@@ -9,7 +9,7 @@ jobs:
     approve-and-merge:
         runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
             pull-requests: write
         env:
             GH_TOKEN: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # Bot user's PAT
@@ -41,6 +41,40 @@ jobs:
                     if [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] || [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]]; then
                       # Label the PR with the semver type (if not already labeled)
                       gh pr edit "$PR_NUMBER" --add-label "$UPDATE_TYPE" || true
+
+                      # Update PR if out of date with base branch
+                      echo "Checking if PR #$PR_NUMBER is up to date with base branch..."
+                      IS_MERGEABLE=$(gh pr view "$PR_NUMBER" --json mergeStateStatus --jq '.mergeStateStatus')
+                      if [[ "$IS_MERGEABLE" == "BEHIND" ]]; then
+                        echo "PR #$PR_NUMBER is behind base branch. Updating..."
+                        gh pr update-branch "$PR_NUMBER" --merge || true
+                        
+                        # Wait for checks to complete after updating
+                        echo "Waiting for checks to complete after branch update..."
+                        CHECK_TIMEOUT=600  # 10 minutes
+                        ELAPSED=0
+                        while [ $ELAPSED -lt $CHECK_TIMEOUT ]; do
+                          CHECK_STATUS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '.statusCheckRollup[0].state // "PENDING"')
+                          echo "Current check status: $CHECK_STATUS"
+                          
+                          if [[ "$CHECK_STATUS" == "SUCCESS" ]]; then
+                            echo "All checks passed!"
+                            break
+                          elif [[ "$CHECK_STATUS" == "FAILURE" ]]; then
+                            echo "Checks failed. Skipping approval for PR #$PR_NUMBER"
+                            continue 2  # Skip to next PR
+                          fi
+                          
+                          sleep 10
+                          ELAPSED=$((ELAPSED + 10))
+                        done
+                        
+                        if [ $ELAPSED -ge $CHECK_TIMEOUT ]; then
+                          echo "Checks did not complete within timeout. Skipping approval for PR #$PR_NUMBER"
+                          continue
+                        fi
+                      fi
+
                       echo "Approving and merging PR #$PR_NUMBER ($UPDATE_TYPE)"
                       gh pr review "$PR_NUMBER" --approve || true
                       gh pr merge "$PR_NUMBER" --auto --merge || true
