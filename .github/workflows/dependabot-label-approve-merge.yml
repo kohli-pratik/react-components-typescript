@@ -1,0 +1,53 @@
+name: Label, Approve & Merge Minor/Patch Dependabot PRs (Bot)
+
+on:
+    schedule:
+        - cron: "0 0 * * *" # Every day at midnight UTC
+    workflow_dispatch:
+
+jobs:
+    approve-and-merge:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            pull-requests: write
+        env:
+            GH_TOKEN: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # Bot user's PAT
+
+        steps:
+            - name: List open Dependabot PRs
+              id: list_prs
+              run: |
+                  gh pr list --author "app/dependabot" --state open --json number > prs.json
+                  cat prs.json
+
+            - name: Label, Approve and Merge Minor/Patch PRs
+              run: |
+                  for PR_NUMBER in $(jq '.[].number' < prs.json); do
+                    echo "Processing PR #$PR_NUMBER"
+
+                    # Fetch PR info (needed for fetch-metadata and labeling)
+                    PR_API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/$PR_NUMBER"
+                    gh pr checkout "$PR_NUMBER"
+
+                    # Fetch metadata for this PR
+                    UPDATE_TYPE=$(gh workflow run dependabot/fetch-metadata@v1 --ref "$PR_NUMBER" --wait --json outputs | jq -r '.update-type // empty')
+                    echo "Dependabot update type: $UPDATE_TYPE"
+
+                    # Label as dependabot PR (if not already labeled)
+                    gh pr edit "$PR_NUMBER" --add-label "dependabot" || true
+
+                    # Label as minor/patch if needed, and approve/merge only those
+                    if [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] || [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]]; then
+                      # Label the PR with the semver type (if not already labeled)
+                      gh pr edit "$PR_NUMBER" --add-label "$UPDATE_TYPE" || true
+                      echo "Approving and merging PR #$PR_NUMBER ($UPDATE_TYPE)"
+                      gh pr review "$PR_NUMBER" --approve || true
+                      gh pr merge "$PR_NUMBER" --auto --merge || true
+                    else
+                      echo "Skipping PR #$PR_NUMBER: Not a minor or patch update ($UPDATE_TYPE)."
+                    fi
+                  done
+              env:
+                  GITHUB_TOKEN: ${{ github.token }} # For fetch-metadata action (built-in)
+                  GH_TOKEN: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # For bot user's PAT (automerge/approve)
