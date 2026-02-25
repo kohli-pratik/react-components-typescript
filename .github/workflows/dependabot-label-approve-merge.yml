@@ -15,13 +15,16 @@ jobs:
             GH_TOKEN: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # Bot user's PAT
 
         steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
             - name: List open Dependabot PRs
               id: list_prs
               run: |
                   gh pr list --author "app/dependabot" --state open --json number > prs.json
                   cat prs.json
 
-            - name: Label, Approve and Merge Minor/Patch PRs
+            - name: Label, Update, Approve and Merge Minor/Patch PRs
               run: |
                   for PR_NUMBER in $(jq '.[].number' < prs.json); do
                     echo "Processing PR #$PR_NUMBER"
