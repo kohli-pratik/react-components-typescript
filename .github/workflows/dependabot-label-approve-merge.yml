@@ -34,7 +34,7 @@ jobs:
                     gh pr checkout "$PR_NUMBER"
 
                     # Fetch metadata for this PR
-                    UPDATE_TYPE=$(gh workflow run dependabot/fetch-metadata@v1 --ref "$PR_NUMBER" --wait --json outputs | jq -r '.update-type // empty')
+                    UPDATE_TYPE=$(gh workflow run dependabot/fetch-metadata@v1 --ref "$PR_NUMBER" --json outputs | jq -r '.update-type // empty')
                     echo "Dependabot update type: $UPDATE_TYPE"
 
                     # Label as dependabot PR (if not already labeled)
