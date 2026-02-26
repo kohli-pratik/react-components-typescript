@@ -1,0 +1,50 @@
+name: Conventional Commits Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-commits-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit message
+        run: |
+          # Get the commit message from the PR
+          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+
+          # Skip validation for merge commits
+          if git log -1 --merges --oneline ${{ github.event.pull_request.head.sha }} > /dev/null 2>&1; then
+            echo "✅ Merge commit detected - skipping validation"
+            exit 0
+          fi
+
+          # Check if commit message matches conventional commits format
+          # Format: type(scope)?: description
+          # Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
+          if ! echo "$COMMIT_MESSAGE" | head -1 | grep -E '^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert)(\(.+\))?!?: .+'; then
+            echo "❌ Commit message does not follow conventional commits format"
+            echo "Expected format: type(scope)?: description"
+            echo "Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert"
+            exit 1
+          fi
+
+          # Check if first line is max 100 characters
+          FIRST_LINE=$(echo "$COMMIT_MESSAGE" | head -1)
+          FIRST_LINE_LENGTH=${#FIRST_LINE}
+
+          if [ $FIRST_LINE_LENGTH -gt 100 ]; then
+            echo "❌ Commit message first line exceeds 100 characters (current: $FIRST_LINE_LENGTH)"
+            exit 1
+          fi
+
+          echo "✅ Commit message is valid"
+          echo "Format: Conventional commits"
+          echo "Length: $FIRST_LINE_LENGTH characters"
