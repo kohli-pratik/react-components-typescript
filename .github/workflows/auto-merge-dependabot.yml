@@ -1,141 +1,98 @@
 name: Auto merge Dependabot PRs
 
 on:
+  # Run everyday at midnight UTC
   schedule:
-    - cron: "0 0 * * *" # Every day at midnight UTC
+    - cron: "0 0 * * *"
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
 permissions:
   contents: write
+  checks: read
   pull-requests: write
 
 jobs:
   getOpenDependabotPRs:
     name: Get open Dependabot PRs
     runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v6
       - name: List open dependabot PRs
         id: list_prs
         uses: actions/github-script@v8
         with:
           script: |
-            const { data: pullRequests } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              per_page: 100
-            });
-            const dependabotPRs = pullRequests.filter(pr => pr.user.login === 'dependabot[bot]');
+            const { data: prs } = await github.rest.pulls.list({ owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 100 });
+            const dependabotPRs = prs.filter(pr => pr.user.login === 'dependabot[bot]');
             console.log(`Found ${dependabotPRs.length} open Dependabot PR(s).`);
             return dependabotPRs.map(pr => pr.number);
     outputs:
       dependabotPRs: ${{ steps.list_prs.outputs.result }}
 
-  approveOpenDependabotPRs:
-    name: Approve open Dependabot PRs
+  approveAndMergeDependabotPRs:
+    name: Approve and Merge open Dependabot PRs
     runs-on: ubuntu-latest
     needs: getOpenDependabotPRs
-    env:
-      GH_TOKEN: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # Bot user's PAT
     steps:
-      - name: Approve open Dependabot PRs
-        id: approve_prs
+      - name: Approve and merge open Dependabot PRs
+        id: approve_merge_prs
         uses: actions/github-script@v8
         with:
+          github-token: ${{ secrets.ACTIONS_WORKFLOWS_TOKEN }} # Bot user's PAT
           script: |
             const prNumbers = ${{ needs.getOpenDependabotPRs.outputs.dependabotPRs }};
-            const approvedPRs = [];
-            for (const prNumber of prNumbers) {
-              // Update the PR if out of date with the base branch
-              await github.rest.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                base: 'master'
-              });
+            console.log("context:", JSON.stringify(context));
 
-              // Wait for checks to complete before approving
-              let checksCompleted = false;
-              while (!checksCompleted) {
-                const { data: pr } = await github.rest.pulls.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: prNumber
-                });
-                const { data: checkRuns } = await github.rest.checks.listForRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: pr.head.sha
-                });
-                const allChecksCompleted = checkRuns.check_runs.every(check => check.status === 'completed');
-                if (allChecksCompleted) {
-                  checksCompleted = true;
-                } else {
-                  console.log(`Waiting for checks to complete for PR #${prNumber}...`);
-                  await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+            for (const prNumber of prNumbers) {
+                // Update the PR if out of date with the base branch
+                let isUpToDateWithBaseBranch = false;
+                while (!isUpToDateWithBaseBranch) {
+                    const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+                    console.log(`PR #${prNumber} mergeable state: ${pr.mergeable_state}`);
+                    
+                    if (pr.mergeable_state === "behind") {
+                        console.log(`PR #${prNumber} is behind the base branch. Updating...`);
+                        await github.rest.pulls.updateBranch({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+                        
+                        // Wait for GitHub to process the update before checking mergeability again
+                        await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+                    } else {
+                        isUpToDateWithBaseBranch = true;
+                    }
                 }
-              }
+                
+                // Wait for PR checks to complete
+                let checksCompleted = false;
+                while (!checksCompleted) {
+                    const { data: pr } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+                    const { data: checkRuns } = await github.rest.checks.listForRef({ owner: context.repo.owner, repo: context.repo.repo, ref: pr.head.sha });
+                    console.log(`PR #${prNumber} check runs: ${JSON.stringify(checkRuns.check_runs)}`);
+                    const allChecksCompleted = checkRuns.check_runs.every(check => check.status === 'completed');
+                    if (allChecksCompleted) {
+                        console.log(`All checks completed for PR #${prNumber}. Proceeding to approve.`);
+                        checksCompleted = true;
+                    } else {
+                        console.log(`Waiting for checks to complete for PR #${prNumber}...`);
+                        await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+                    }
+                }
 
-              // Approve the PR
-              const { data: reviewResult } = await github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                event: 'APPROVE'
-              });
-
-              if (reviewResult.state === 'APPROVED') {
-                console.log(`Approved PR #${prNumber}`);
-                approvedPRs.push(prNumber);
-              } else {
-                console.log(`Failed to approve PR #${prNumber}`);
-              }
-            }
-            return approvedPRs;
-    outputs:
-      approvedDependabotPRs: ${{ steps.approve_prs.outputs.result }}
-
-  mergeOpenDependabotPRs:
-    name: Merge open Dependabot PRs
-    runs-on: ubuntu-latest
-    needs: approveOpenDependabotPRs
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Merge open Dependabot PRs
-        id: merge_prs
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const prNumbers = ${{ needs.approveOpenDependabotPRs.outputs.approvedDependabotPRs }};
-            for (const prNumber of prNumbers) {
-              // Verify the PR is mergeable before attempting to merge
-              const { data: pr } = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber
-              });
-              if (pr.mergeable === false) {
-                console.log(`PR #${prNumber} is not mergeable. Skipping.`);
-                continue;
-              }
-
-              const {data: mergeResult} = await github.rest.pulls.merge({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: prNumber,
-                  merge_method: 'merge'
-                });
-              
-                if (mergeResult.merged) {
-                  console.log(`Successfully merged PR #${prNumber}`);
+                // Approve the PR as code owner and if approved successfully, merge it
+                const { data: reviewResult } = await github.rest.pulls.createReview({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber, event: 'APPROVE' });
+                if (reviewResult.state === 'APPROVED') {
+                    console.log(`Approved PR #${prNumber}`);
+                    
+                    // Merge the PR
+                    const { data: mergeResult } = await github.rest.pulls.merge({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber, merge_method: 'merge' });
+                    
+                    if (mergeResult.merged) {
+                        console.log(`Successfully merged PR #${prNumber}`);
+                    } else {
+                        console.error(`Failed to merge PR #${prNumber}: ${mergeResult.message}`);
+                    }
                 } else {
-                  console.error(`Failed to merge PR #${prNumber}: ${mergeResult.message}`);
+                    console.log(`Failed to approve PR #${prNumber}`);
                 }
             }
