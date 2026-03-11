@@ -1,8 +1,8 @@
 name: Auto merge Dependabot PRs
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: "0 0 * * *" # Every day at midnight UTC
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   getOpenDependabotPRs:
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'kohli-pratik/react-components-typescript'
     name: Get open Dependabot PRs
     runs-on: ubuntu-latest
     env:
@@ -39,7 +38,6 @@ jobs:
       dependabotPRs: ${{ steps.list_prs.outputs.result }}
 
   approveOpenDependabotPRs:
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'kohli-pratik/react-components-typescript'
     name: Approve open Dependabot PRs
     runs-on: ubuntu-latest
     needs: getOpenDependabotPRs
@@ -104,7 +102,6 @@ jobs:
       approvedDependabotPRs: ${{ steps.approve_prs.outputs.result }}
 
   mergeOpenDependabotPRs:
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'kohli-pratik/react-components-typescript'
     name: Merge open Dependabot PRs
     runs-on: ubuntu-latest
     needs: approveOpenDependabotPRs
