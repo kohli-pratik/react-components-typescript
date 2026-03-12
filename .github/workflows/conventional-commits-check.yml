@@ -11,40 +11,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Validate commit message
-        run: |
-          # Get the commit message from the PR
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+        uses: actions/github-script@v8
+        with:
+          script: |
+            // Get the commit message from the PR
+            const { data: commits } = await github.rest.pulls.listCommits({ owner: context.repo.owner, repo: context.repo.repo, pull_number: context.payload.pull_request.number });
+            const commitMessage = commits[commits.length - 1].commit.message;
 
-          # Skip validation for merge commits
-          if git log -1 --merges --oneline ${{ github.event.pull_request.head.sha }} > /dev/null 2>&1; then
-            echo "✅ Merge commit detected - skipping validation"
-            exit 0
-          fi
+            if(commitMessage === `Merge branch '${context.payload.pull_request.base.ref}' into ${context.payload.pull_request.head.ref}`) {
+              console.log("Merge commit detected, skipping conventional commits check");
+            } else {
+              console.log(`Checking commit message: ${commitMessage}`);
 
-          # Check if commit message matches conventional commits format
-          # Format: type(scope)?: description
-          # Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
-          if ! echo "$COMMIT_MESSAGE" | head -1 | grep -E '^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert)(\(.+\))?!?: .+'; then
-            echo "❌ Commit message does not follow conventional commits format"
-            echo "Expected format: type(scope)?: description"
-            echo "Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert"
-            exit 1
-          fi
+              /**
+                * Check if commit message follows conventional commits format:
+                * type(scope)?: description
+                * Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
+                */
+              const conventionalCommitFormatRegex = /^(\w+)(\(.+\))?!?: .+/;
+              if (!conventionalCommitFormatRegex.test(commitMessage)) {
+                core.setFailed("Commit message does not follow conventional commits format. Expected format: type(scope)?: description. Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert");
+              }
 
-          # Check if first line is max 100 characters
-          FIRST_LINE=$(echo "$COMMIT_MESSAGE" | head -1)
-          FIRST_LINE_LENGTH=${#FIRST_LINE}
+              // Check if commit type is valid
+              const validCommitTypes = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "revert"];
+              const commitTypeRegex = /^(\w+)/;
+              const commitTypeMatch = commitMessage.match(commitTypeRegex);
+              const commitType = commitTypeMatch ? commitTypeMatch[1] : null;
+              if (!validCommitTypes.includes(commitType)) {
+                core.setFailed(`Invalid commit type '${commitType}'. Valid types: ${validCommitTypes.join(", ")}`);
+              }
 
-          if [ $FIRST_LINE_LENGTH -gt 100 ]; then
-            echo "❌ Commit message first line exceeds 100 characters (current: $FIRST_LINE_LENGTH)"
-            exit 1
-          fi
-
-          echo "✅ Commit message is valid"
-          echo "Format: Conventional commits"
-          echo "Length: $FIRST_LINE_LENGTH characters"
+              // Check if first line is max 100 characters            
+              const firstLine = commitMessage.split("\n")[0];
+              if (firstLine.length > 100) {
+                core.setFailed(`Commit message first line exceeds 100 characters (current: ${firstLine.length})`);
+              } else {
+                console.log("✅ Commit message is valid");
+                console.log(`Format: Conventional commits`);
+                console.log(`Length: ${firstLine.length} characters`);
+              }
+            }
