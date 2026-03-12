@@ -31,15 +31,15 @@ jobs:
               /**
                 * Check if commit message follows conventional commits format:
                 * type(scope)?: description
-                * Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
+                * Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert and build
                 */
               const conventionalCommitFormatRegex = /^(\w+)(\(.+\))?!?: .+/;
               if (!conventionalCommitFormatRegex.test(commitMessage)) {
-                core.setFailed("Commit message does not follow conventional commits format. Expected format: type(scope)?: description. Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert");
+                core.setFailed("Commit message does not follow conventional commits format. Expected format: type(scope)?: description. Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert and build");
               }
 
               // Check if commit type is valid
-              const validCommitTypes = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "revert"];
+              const validCommitTypes = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "revert", "build"];
               const commitTypeRegex = /^(\w+)/;
               const commitTypeMatch = commitMessage.match(commitTypeRegex);
               const commitType = commitTypeMatch ? commitTypeMatch[1] : null;
