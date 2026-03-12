@@ -1,0 +1,59 @@
+name: Conventional Commits Check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit message
+        uses: actions/github-script@v8
+        with:
+          script: |
+            // Get the commit message from the PR
+            const { data: commits } = await github.rest.pulls.listCommits({ owner: context.repo.owner, repo: context.repo.repo, pull_number: context.payload.pull_request.number });
+            const commitMessage = commits[commits.length - 1].commit.message;
+
+            if(commitMessage === `Merge branch '${context.payload.pull_request.base.ref}' into ${context.payload.pull_request.head.ref}`) {
+              console.log("Merge commit detected, skipping conventional commits check");
+            } else {
+              console.log(`Checking commit message: ${commitMessage}`);
+
+              /**
+                * Check if commit message follows conventional commits format:
+                * type(scope)?: description
+                * Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
+                */
+              const conventionalCommitFormatRegex = /^(\w+)(\(.+\))?!?: .+/;
+              if (!conventionalCommitFormatRegex.test(commitMessage)) {
+                core.setFailed("Commit message does not follow conventional commits format. Expected format: type(scope)?: description. Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert");
+              }
+
+              // Check if commit type is valid
+              const validCommitTypes = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "revert"];
+              const commitTypeRegex = /^(\w+)/;
+              const commitTypeMatch = commitMessage.match(commitTypeRegex);
+              const commitType = commitTypeMatch ? commitTypeMatch[1] : null;
+              if (!validCommitTypes.includes(commitType)) {
+                core.setFailed(`Invalid commit type '${commitType}'. Valid types: ${validCommitTypes.join(", ")}`);
+              }
+
+              // Check if first line is max 100 characters            
+              const firstLine = commitMessage.split("\n")[0];
+              if (firstLine.length > 100) {
+                core.setFailed(`Commit message first line exceeds 100 characters (current: ${firstLine.length})`);
+              } else {
+                console.log("✅ Commit message is valid");
+                console.log(`Format: Conventional commits`);
+                console.log(`Length: ${firstLine.length} characters`);
+              }
+            }
