@@ -27,7 +27,13 @@ jobs:
             const { data: prs } = await github.rest.pulls.list({ owner: context.repo.owner, repo: context.repo.repo, state: 'open', per_page: 100 });
             const dependabotPRs = prs.filter(pr => pr.user.login === 'dependabot[bot]');
             console.log(`Found ${dependabotPRs.length} open Dependabot PR(s).`);
-            return dependabotPRs.map(pr => pr.number);
+
+            // Filter out PRs that have the 'major' label and are updating major versions to avoid potential breaking changes
+            const nonMajorDependabotPRs = dependabotPRs.filter(pr => !pr.labels.some(label => label.name.toLowerCase() === 'major'));
+            console.log(`Found ${nonMajorDependabotPRs.length} open Dependabot PR(s) that are not major version updates.`);
+
+            // Return the PR numbers of the non-major Dependabot PRs
+            return nonMajorDependabotPRs.map(pr => pr.number);
     outputs:
       dependabotPRs: ${{ steps.list_prs.outputs.result }}
 
