@@ -24,5 +24,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "setupTests.ts", "vitest.browser.config.ts"],
+  "include": [
+    "src",
+    "vitest.browser.setup.ts",
+    "vitest.jsdom.setup.ts",
+    "vitest.browser.config.ts",
+    "vitest.jsdom.config.ts"
+  ]
 }

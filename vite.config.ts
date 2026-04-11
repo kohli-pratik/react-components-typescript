@@ -12,7 +12,9 @@ export default defineConfig({
   },
   base: "/react-components-typescript/",
   test: {
-    setupFiles: ["./setupTests.ts"],
+    include: ["src/**/*.spec.{ts,tsx}"],
+    exclude: ["src/**/*.axe.spec.{ts,tsx}"],
+    setupFiles: ["./vitest.browser.setup.ts"],
     browser: {
       provider: playwright(),
       enabled: true,
