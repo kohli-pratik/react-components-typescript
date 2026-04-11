@@ -3,7 +3,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    setupFiles: ["./setupTests.ts"],
+    include: ["src/**/*.spec.{ts,tsx}"],
+    exclude: ["src/**/*.axe.spec.{ts,tsx}"],
+    setupFiles: ["./vitest.browser.setup.ts"],
     browser: {
       provider: playwright(),
       enabled: true,
