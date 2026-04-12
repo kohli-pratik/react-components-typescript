@@ -29,6 +29,8 @@
     "vitest.browser.setup.ts",
     "vitest.jsdom.setup.ts",
     "vitest.browser.config.ts",
-    "vitest.jsdom.config.ts"
+    "vitest.jsdom.config.ts",
+    ".storybook/*.ts",
+    "vitest.shims.d.ts"
   ]
 }
