@@ -1,35 +1,35 @@
 name: "Chromatic"
 
 on:
-    # Run on pushes to branches
-    push:
-    # Allow manual trigger from the Actions tab
-    workflow_dispatch:
+  # Run on pushes to branches
+  push:
+  # Allow manual trigger from the Actions tab
+  workflow_dispatch:
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
-    chromatic:
-        name: Run Chromatic
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v6
-              with:
-                  fetch-depth: 0
-            - name: Setup Node
-              uses: actions/setup-node@v6
-              with:
-                  node-version: 24.14.1
-            - name: Install dependencies
-              run: npm ci
-            - name: Run Chromatic
-              uses: chromaui/action@latest
-              with:
-                  projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-                  autoAcceptChanges: "master"
-                  onlyChanged: true
-                  exitOnceUploaded: true
-                  exitZeroOnChanges: false
-                  skip: "dependabot/**"
+  chromatic:
+    name: Run Chromatic
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.14.1
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          autoAcceptChanges: "master"
+          onlyChanged: true
+          exitOnceUploaded: true
+          exitZeroOnChanges: false
+          skip: "dependabot/**"

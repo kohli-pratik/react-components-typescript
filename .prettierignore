@@ -1,0 +1,20 @@
+node_modules
+dist
+coverage
+storybook-static
+
+package-lock.json
+.github/CODEOWNERS
+index.html
+LICENSE
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?Ï
