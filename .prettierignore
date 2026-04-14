@@ -6,7 +6,6 @@ storybook-static
 package-lock.json
 .github/CODEOWNERS
 index.html
-README.md
 LICENSE
 
 # Editor directories and files
