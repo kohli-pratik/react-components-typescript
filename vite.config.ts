@@ -22,7 +22,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["main.tsx", "src/**/*.stories.{ts,tsx}"],
+      exclude: ["index.tsx", "src/**/*.stories.{ts,tsx}"],
       reportOnFailure: true,
       thresholds: {
         100: true,

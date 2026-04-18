@@ -31,6 +31,7 @@
     "vitest.browser.config.ts",
     "vitest.jsdom.config.ts",
     ".storybook/*.ts",
-    "vitest.shims.d.ts"
+    "vitest.shims.d.ts",
+    "lint-staged.config.ts"
   ]
 }
