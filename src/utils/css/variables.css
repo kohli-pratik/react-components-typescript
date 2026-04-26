@@ -1,0 +1,47 @@
+:root[data-theme="light"] {
+  --background-color: #ffffff;
+
+  --surface-color: #f8fafc; /* To be used for Cards and Tiles to provide subtle depth */
+
+  --text-heading: #1d4ed8;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+
+  --divider: #e2e8f0;
+
+  --button-outline: #1d4ed8;
+
+  --button-background-primary: #1d4ed8;
+  --button-text-primary: #ffffff;
+  --button-primary-hover: #1e40af;
+  --button-primary-active: #1e3a8a;
+
+  --button-background-secondary: #f8fafc;
+  --button-text-secondary: #1e293b;
+  --button-secondary-hover: #f1f5f9;
+  --button-secondary-active: #e2e8f0;
+}
+
+:root[data-theme="dark"] {
+  --background-color: #0f172a;
+
+  --surface-color: #1e293b; /* To be used for Cards and Tiles to provide subtle depth */
+
+  --text-heading: #60a5fa;
+  --text-body: #f8fafc;
+  --text-secondary: #94a3b8;
+
+  --divider: #334155;
+
+  --button-outline: #60a5fa;
+
+  --button-background-primary: #60a5fa;
+  --button-text-primary: #0f172a;
+  --button-primary-hover: #93c5fd;
+  --button-primary-active: #3b82f6;
+
+  --button-background-secondary: #1e293b;
+  --button-text-secondary: #f8fafc;
+  --button-secondary-hover: #334155;
+  --button-secondary-active: #334155;
+}

@@ -27,5 +27,6 @@ coverage
 
 *storybook.log
 storybook-static
+__screenshots__
 
 .env
