@@ -20,18 +20,6 @@
     "storybook": "storybook dev -p 6006",
     "chromatic": "npx chromatic"
   },
-  "lint-staged": {
-    "./**/*.{js,jsx,ts,tsx}": [
-      "npm run lint:fix",
-      "npm run format",
-      "npm run build-storybook",
-      "npm run test:axe",
-      "npm run test:coverage"
-    ],
-    "./**/*.(json|css|md)": [
-      "npm run format"
-    ]
-  },
   "dependencies": {
     "react": "^19.2.5",
     "react-dom": "^19.2.5"

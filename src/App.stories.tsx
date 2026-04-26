@@ -1,10 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { App } from "./App";
+import { ThemeProvider } from "./context/theme";
 
-type AppMeta = Meta<typeof App>;
+const AppWrapper = () => (
+  <ThemeProvider>
+    <App />
+  </ThemeProvider>
+);
+
+type AppMeta = Meta<typeof AppWrapper>;
 const AppMetaData: AppMeta = {
   title: "App",
-  component: App,
+  component: AppWrapper,
 };
 
 export default AppMetaData;
