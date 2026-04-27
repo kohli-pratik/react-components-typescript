@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This personal project focuses on building re-usable, robust and accessible UI components using React and TypeScript. The intention is to using the development process to test new tools, frameworks, libraries etc in a working environment and so there is no set "end date" for this project.
+This personal project focuses on building re-usable, robust and accessible UI components using React and TypeScript. The intention is to use the development process to test new tools, frameworks, libraries etc. in a working environment and so there is no set "end date" for this project.
 
 Once the base setup is completed and there are working components implemented by myself, I will be leveraging AI to evaluate said components and to build new components using my implementation approach as an example. Where a component is built using AI, it will be labelled as such for clarity.
 
