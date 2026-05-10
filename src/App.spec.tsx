@@ -1,10 +1,10 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { App } from "./App";
-import { APP_THEME_STORAGE_KEY, ThemeProvider } from "./context/theme";
+import { APP_THEME_LOCAL_STORAGE_KEY, ThemeProvider } from "./context/theme";
 
 beforeEach(() => {
-  localStorage.removeItem(APP_THEME_STORAGE_KEY);
+  localStorage.removeItem(APP_THEME_LOCAL_STORAGE_KEY);
 });
 
 test("theme toggle button changes the theme which is stored in localStorage correctly", async () => {
@@ -15,11 +15,11 @@ test("theme toggle button changes the theme which is stored in localStorage corr
 
   await screen.locator.getByRole("button", { name: "Toggle theme" }).click();
   await expect.element(screen.getByText("Current theme: light")).toBeVisible();
-  expect(localStorage.getItem(APP_THEME_STORAGE_KEY)).toBe("light");
+  expect(localStorage.getItem(APP_THEME_LOCAL_STORAGE_KEY)).toBe("light");
 
   await screen.locator.getByRole("button", { name: "Toggle theme" }).click();
   await expect.element(screen.getByText("Current theme: dark")).toBeVisible();
-  expect(localStorage.getItem(APP_THEME_STORAGE_KEY)).toBe("dark");
+  expect(localStorage.getItem(APP_THEME_LOCAL_STORAGE_KEY)).toBe("dark");
 });
 
 test("reset theme button resets the theme to system theme", async () => {
@@ -33,7 +33,7 @@ test("reset theme button resets the theme to system theme", async () => {
 
   await screen.locator.getByRole("button", { name: "Reset theme" }).click();
   await expect.element(screen.getByText("Current theme: light")).toBeVisible();
-  expect(localStorage.getItem(APP_THEME_STORAGE_KEY)).toBe("light");
+  expect(localStorage.getItem(APP_THEME_LOCAL_STORAGE_KEY)).toBe("light");
 });
 
 test("system theme is detected correctly", async () => {
