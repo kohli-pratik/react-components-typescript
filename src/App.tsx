@@ -1,4 +1,4 @@
-import "./App.css";
+import viteLogo from "../public/vite.svg";
 import {
   main,
   themeResetButton,
@@ -11,14 +11,14 @@ import reactLogo from "./assets/react.svg";
 import { useTheme } from "./hooks/useTheme";
 import { darkTheme } from "./utils/css/theme/darkTheme.css.ts";
 import { lightTheme } from "./utils/css/theme/lightTheme.css.ts";
-import viteLogo from "/vite.svg";
+
+const getSystemTheme = () =>
+  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
 export const App = () => {
   const { theme, setTheme } = useTheme();
   const appTheme = theme === "light" ? lightTheme : darkTheme;
-  const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  const systemTheme = getSystemTheme();
 
   return (
     <div id="app" className={appTheme}>
