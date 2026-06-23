@@ -17,4 +17,7 @@ LICENSE
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?Ï
+*.sw?
+
+# Ignore formatting generated TanStack Router file
+src/routing/routeTree.gen.ts

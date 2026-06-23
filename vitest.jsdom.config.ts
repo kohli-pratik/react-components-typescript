@@ -6,6 +6,9 @@ export default defineConfig({
   test: {
     include: ["src/**/*.axe.spec.{ts,tsx}", "src/**/*.spec.{ts}"],
     setupFiles: ["./vitest.jsdom.setup.ts"],
+    typecheck: { enabled: true },
     environment: "jsdom",
+    watch: false,
+    globals: true,
   },
 });
