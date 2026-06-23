@@ -10,6 +10,7 @@ export type ThemeProviderProps = {
 
 export type ThemeProviderState = {
   theme: Theme;
+  themeClassName: string;
   setTheme: (theme: Theme) => void;
 };
 

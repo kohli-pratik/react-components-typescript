@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import pluginRouter from "@tanstack/eslint-plugin-router";
 import { importX } from "eslint-plugin-import-x";
 import jsxA11yX from "eslint-plugin-jsx-a11y-x";
 import reactDom from "eslint-plugin-react-dom";
@@ -36,6 +37,23 @@ export default defineConfig([
         { prefer: "type-imports", fixStyle: "separate-type-imports" },
       ],
       "@typescript-eslint/consistent-type-definitions": "off",
+      "@typescript-eslint/only-throw-error": [
+        "error",
+        {
+          allow: [
+            {
+              from: "package",
+              package: "@tanstack/router-core",
+              name: "Redirect",
+            },
+            {
+              from: "package",
+              package: "@tanstack/router-core",
+              name: "NotFoundError",
+            },
+          ],
+        },
+      ],
     },
     languageOptions: {
       sourceType: "module",
@@ -48,6 +66,7 @@ export default defineConfig([
       },
     },
   },
+  // Enable lint rules for Storybook
   ...storybookConfigs["flat/recommended"],
   {
     // Enable lint rules for import/export syntax
@@ -78,6 +97,7 @@ export default defineConfig([
       "**/*.stories.{ts,tsx}",
       "**/*.config.{js,ts}",
       ".storybook/*.ts",
+      "src/routing/routeTree.gen.ts",
     ],
     rules: {
       "no-restricted-syntax": [
@@ -87,6 +107,15 @@ export default defineConfig([
           message: "Prefer named exports over default exports.",
         },
       ],
+    },
+  },
+  // Enable lint rules for TanStack Router
+  {
+    plugins: {
+      "@tanstack/router": pluginRouter,
+    },
+    rules: {
+      "@tanstack/router/create-route-property-order": "error",
     },
   },
 ]);
