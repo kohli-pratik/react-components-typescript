@@ -34,7 +34,7 @@
     "@storybook/addon-vitest": "^10.5.7",
     "@storybook/react-vite": "^10.5.3",
     "@tanstack/eslint-plugin-router": "^1.162.0",
-    "@tanstack/react-router-devtools": "^1.167.0",
+    "@tanstack/react-router-devtools": "^1.167.1",
     "@tanstack/router-plugin": "^1.168.27",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.9.3",
